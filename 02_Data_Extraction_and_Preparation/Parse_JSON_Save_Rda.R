@@ -11,9 +11,6 @@ filePath <- "C:/Downloads/"
 #Get a list with each file on that folder (not recursively) containing the "json" string.
 files <- list.files(filePath, pattern = "json")
 
-#Instantiate an empy data.table object.
-tweets.dt <- data.table()
-
 #A counter to assign as a suffix to each output rda file generated.
 i=1
 
