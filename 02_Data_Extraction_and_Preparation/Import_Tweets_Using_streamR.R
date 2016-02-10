@@ -7,7 +7,7 @@ load("my_oauth_twitter.Rdata")
 #Capture tweets based upon multiple keywords.
 #Save input as JSON file.
 #Wait 4 hours before closing connection.
-filterStream(file.name = "DELETEME.json", # Save tweets in a json file
+filterStream(file.name = "imported_tweets.json", # Save tweets in a json file
              track = c("recommend","advice","recommended","adviced","needed",
                        "search","I search","we search","we're searching","we need"
                        ,"where can I","were can","where is there","do you know","does anybody know"
