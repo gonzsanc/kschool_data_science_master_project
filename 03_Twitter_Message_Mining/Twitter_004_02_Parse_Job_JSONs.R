@@ -1,5 +1,3 @@
-setwd("C:/Descargas/Onedrive/KSCHOOL/Proyecto")
-
 #This script extracts data from streamR's JSON files and saves them as data.table files.
 #The resulting files are easy to load on R.
 
