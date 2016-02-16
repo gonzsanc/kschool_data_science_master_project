@@ -95,7 +95,7 @@ rm(pattern.stopwords)
 #save(tweets.dt.sample,file ="tweets.dt.sample.rda" )
 load("./stream_001/tweets.dt.sample.rda")
 
-#The tweets vector is converted into a corpora set containing all the messages.
+#The tweets vector is converted into a corpus set containing all the messages.
 cp <- Corpus(VectorSource(tweets.dt.sample$text))
 rm(tweets.dt.sample)
 #Stemming requires a lot of memory. It will improve the results if enabled but a powerful device is required.
@@ -109,5 +109,5 @@ cp.dtm <- TermDocumentMatrix(cp,control=list(minWordLength=2))
 #save(cp,file="cp.tweets.dt.sample.rda",compress = T)
 #save(cp.dtm,file ="cp.dtm.tweets.dt.sample.rda",compress=T)
 
-#Print in stdout those terms that are repeated at least 5000 times across the corpora.
+#Print in stdout those terms that are repeated at least 5000 times across all the documents on the corups .
 findFreqTerms(cp.dtm,5000)
