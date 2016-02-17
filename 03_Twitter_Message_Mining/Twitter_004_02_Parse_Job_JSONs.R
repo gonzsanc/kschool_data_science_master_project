@@ -48,3 +48,49 @@ for (f in files){
   #Release back memory resources.
   rm(tmp)
 }
+
+## Removing incomplete tweets ##
+
+#The files created were stored in a subfolder: "./TwitterData/003_rda/"
+#Those tweets were stored as data.tables/data.frames in a variable called "tmp"
+filePath <- "./TwitterData/003_rda/"
+
+#Get list with all the rda files at the location.
+files <- list.files(filePath ,pattern = "job")
+
+#Declare data.table variable
+tweets.dt <- data.table()
+
+#All the previously parsed tweets are loaded into a single variable (tweets.dt)
+#This loop assumes the tweet data was and is stored in the "tmp" variable.
+#It may be important deleting the "tmp" variable after each loop to optimize the resources usage.
+for (f in files){
+  load(paste0(filePath,f))
+  tweets.dt <- rbind(tweets.dt,tmp)
+  rm(tmp)
+}
+
+#After loading the data it is a good idea saving it in a single file for later use.
+#save(tweets.dt,file="alljobtweets.rda", compress = T)
+#load("./TwitterData/004_rda/alljobtweets.rda")
+tweets.dt<-data.table(tweets.dt)
+
+#Sometimes Twitter delivers incomplete data, not very often, which counts are negative.
+#The reason is that partical data is taking too long to be fetched.
+# find explanation here -> https://dev.twitter.com/streaming/overview/processing#Missing_counts
+head(sort(unique(tweets.dt[tweets.dt$friends_count<0,]$friends_count,decreasing = F)))
+
+```
+[1] -704  -15   -6   -3
+```
+
+nrow(tweets.dt[tweets.dt$friends_count<0,])
+```
+[1] 23
+```
+
+#Removing incomplete tweets:
+tweets.dt <- tweets.dt[tweets.dt$friends_count>=0,]
+
+#backup:
+save(tweets.dt,file="alljobtweets.rda", compress = T)
