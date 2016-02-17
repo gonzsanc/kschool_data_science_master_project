@@ -79,15 +79,11 @@ tweets.dt<-data.table(tweets.dt)
 #The reason is that partical data is taking too long to be fetched.
 # find explanation here -> https://dev.twitter.com/streaming/overview/processing#Missing_counts
 head(sort(unique(tweets.dt[tweets.dt$friends_count<0,]$friends_count,decreasing = F)))
+#[1] -704  -15   -6   -3
 
-```
-[1] -704  -15   -6   -3
-```
-
+#The number of missing items is low.
 nrow(tweets.dt[tweets.dt$friends_count<0,])
-```
-[1] 23
-```
+#[1] 23
 
 #Removing incomplete tweets:
 tweets.dt <- tweets.dt[tweets.dt$friends_count>=0,]
