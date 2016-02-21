@@ -5,3 +5,15 @@ https://onedrive.live.com/redir?resid=E6AE5490ACB22C0A!15608&authkey=!AChjCRt0im
 The root folder contains the raw JSON files compressed and their equivalent ones in R data.table format.
 
 The not_used folder contains data that has not been used due to the file size (3+Gb).
+la biblioteca effects muestra el efecto de una variable en el modelo.
+
+install.packages("Hmisc")
+install.packages("MicroDatosEs", repos="http://R-Forge.R-project.org")
+require(MicroDatosEs)
+
+
+MV -> máxima verosimilitud.
+
+logit -> regresiones logisticas con el modelo logit. el otro que no se usa tanto es el probit.
+
+En regresión logística no hay fn de pérdida como antes.
