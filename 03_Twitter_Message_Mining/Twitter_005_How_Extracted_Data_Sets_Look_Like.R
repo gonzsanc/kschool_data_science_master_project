@@ -1,7 +1,3 @@
-#setwd("C:/Descargas/Onedrive/KSCHOOL/Proyecto")
-
-#setwd("C:/Users/gonzalo/OneDrive/KSCHOOL/Proyecto")## LOAD LIBRARIES ##
-
 #Required libraries:
 require(data.table)
 require(ggplot2)
@@ -170,17 +166,21 @@ locations <- as.data.frame(tweets.dt.geolocated)
 # Not included on wiki:
 with(locations, plot(lon, lat))
 
+#Map generation adapted from https://gist.github.com/dsparks/4329876
+
 #Generate world-map with tweets sources as points.
-worldMap <- map_data("world")  # Easiest way to grab a world map shapefile
-zp1 <- ggplot(worldMap)
-zp1 <- zp1 + geom_path(aes(x = long, y = lat, group = group),  # Draw map
+worldMap <- map_data("world")
+mapPlot <- ggplot(worldMap)
+#Drawing map
+mapPlot <- mapPlot + geom_path(aes(x = long, y = lat, group = group), 
                        colour = gray(2/3), lwd = 1/3)
-zp1 <- zp1 + geom_point(data = locations,  # Add points indicating users
+#Plot points on map:
+mapPlot <- mapPlot + geom_point(data = locations,
                         aes(x = lon, y = lat),
                         colour = "RED", alpha = 1/2, size = 1)
-zp1 <- zp1 + coord_equal()  # Better projections are left for a future post
-zp1 <- zp1 + theme_minimal()  # Drop background annotations
-print(zp1)
+mapPlot <- mapPlot + coord_equal()  #Projections
+#mapPlot <- mapPlot + theme_minimal()  # Drop background gray color.
+print(mapPlot)
 
 #Note:
 #A backup of the multiplot function has been kept on this location:
