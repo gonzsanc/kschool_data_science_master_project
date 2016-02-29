@@ -1,6 +1,3 @@
-#setwd("C:/Descargas/Onedrive/KSCHOOL/Proyecto")
-
-#setwd("C:/Users/gonzalo/OneDrive/KSCHOOL/Proyecto")## LOAD LIBRARIES ##
 
 #Required libraries:
 require(data.table)
@@ -37,43 +34,43 @@ load("./sample_job_messages.rda")
 
 #Adapted from: http://stackoverflow.com/questions/28248457/gsub-in-r-with-unicode-replacement-give-different-results-under-windows-compared
 trueunicode.hack <- function(string){
-       
-      string <- as.character(string)
-       m <- gregexpr("<U\\+[0-9A-F]{4}>", string)
-       if(-1==m[[1]][1])
-       return(string)
-       
-       codes <- unlist(regmatches(string, m))
-       replacements <- codes
-       N <- length(codes)
-       for(i in 1:N){
-       replacements[i] <- intToUtf8(strtoi(paste0("0x", substring(codes[i], 4, 7))))
-       }
-       
-       # if the string doesn't start with a unicode, the copy its initial part
-       # until first occurrence of unicode
-       if(1!=m[[1]][1]){
-       y <- substring(string, 1, m[[1]][1]-1)
-       y <- paste0(y, replacements[1])
-       }else{
-       y <- replacements[1]
-       }
-       
-       # if more than 1 unicodes in the string
-       if(1<N){
-       for(i in 2:N){
-       s <- gsub("<U\\+[0-9A-F]{4}>", replacements[i], 
-       substring(string, m[[1]][i-1]+8, m[[1]][i]+7))
-       Encoding(s) <- "UTF-8"
-       y <- paste0(y, s)
-       }
-       }
-       
-       # get the trailing contents, if any
-       if( nchar(string)>(m[[1]][N]+8) )
-       y <- paste0( y, substring(string, m[[1]][N]+8, nchar(string)) )
-       y
+  
+  string <- as.character(string)
+  m <- gregexpr("<U\\+[0-9A-F]{4}>", string)
+  if(-1==m[[1]][1])
+    return(string)
+  
+  codes <- unlist(regmatches(string, m))
+  replacements <- codes
+  N <- length(codes)
+  for(i in 1:N){
+    replacements[i] <- intToUtf8(strtoi(paste0("0x", substring(codes[i], 4, 7))))
   }
+  
+  # if the string doesn't start with a unicode, the copy its initial part
+  # until first occurrence of unicode
+  if(1!=m[[1]][1]){
+    y <- substring(string, 1, m[[1]][1]-1)
+    y <- paste0(y, replacements[1])
+  }else{
+    y <- replacements[1]
+  }
+  
+  # if more than 1 unicodes in the string
+  if(1<N){
+    for(i in 2:N){
+      s <- gsub("<U\\+[0-9A-F]{4}>", replacements[i], 
+                substring(string, m[[1]][i-1]+8, m[[1]][i]+7))
+      Encoding(s) <- "UTF-8"
+      y <- paste0(y, s)
+    }
+  }
+  
+  # get the trailing contents, if any
+  if( nchar(string)>(m[[1]][N]+8) )
+    y <- paste0( y, substring(string, m[[1]][N]+8, nchar(string)) )
+  y
+}
 
 sample.job.messages$text <- sapply(sample.job.messages$text, trueunicode.hack)
 
@@ -95,8 +92,8 @@ cleanText <- function(x){
   tmp <- gsub("^\\s+|\\s+$", " ", tmp)
   
   #tmp <- gsub ("('s‘|’","",tmp)
- x <- tmp
- return (x)
+  x <- tmp
+  return (x)
 }
 
 convert_count <- function(x) {
@@ -146,14 +143,6 @@ wordcloud(sample.job.messages.corpus[noise_indices], scale=c(8,.2),min.freq=12,
           max.words=Inf, random.order=FALSE, rot.per=.15, colors=pal2)
 
 
-
-old.par <- par(mfrow=c(1, 2))
-> plot(faithful, main="Faithful eruptions")
-> plot(large.islands, main="Islands", ylab="Area")
-> par(old.par)
-
-
-
 jobs_dtm_train <- sample.job.messages.dtm[training_indices,]
 jobs_dtm_test <- sample.job.messages.dtm[testing_indices,]
 jobs_corpus_train <- sample.job.messages.corpus[training_indices]
@@ -168,114 +157,52 @@ job_test <- DocumentTermMatrix(jobs_corpus_test, control=list(dictionary = five_
 job_train <- apply(job_train, 2, convert_count)
 job_test <- apply(job_test, 2, convert_count)
 
+#Linear regression.
+jobs_classifier <- lm(jobs_raw_train$is_job_offer  ~ .,data = as.data.frame(job_train))
+jobs_test_pred <- predict(jobs_classifier, newdata=as.data.frame(job_test))
+jobs_classifier.anova <- anova(jobs_classifier)
+jobs_classifier.anova <- jobs_classifier.anova[jobs_classifier.anova$`Pr(>F)`<=0.005,]
+jobs_classifier.anova <- jobs_classifier.anova[order(jobs_classifier.anova[,5]),]
+jobs_classifier.anova
+summary(jobs_classifier)
+
+#Logistic regression
+jobs_classifier <- glm(jobs_raw_train$is_job_offer  ~ .,family=binomial(link='logit'),data = as.data.frame(job_train))
+summary(jobs_classifier)
+#http://www.r-bloggers.com/how-to-perform-a-logistic-regression-in-r/
+jobs.fitted.results <- predict(jobs_classifier,newdata=as.data.frame(job_test),type='response')
+jobs.fitted.results <- ifelse(fitted.results > 0.5,1,0)
+misClasificError <- mean(jobs.fitted.results !=jobs_raw_test$is_job_offer  )
+print(paste('Accuracy',1-misClasificError))
+
+anova(jobs_classifier, test="Chisq")
+
+library(ROCR)
+p <- predict(jobs_classifier,newdata=as.data.frame(job_test),type='response')
+pr <- prediction(p, as.data.frame(jobs_raw_test$is_job_offer))
+prf <- performance(pr, measure = "tpr", x.measure = "fpr")
+plot(prf)
+auc <- performance(pr, measure = "auc")
+#abline(h =  auc@y.values[1],col="red")
+abline(h=0.822666666666667,col="red")
+abline(v=0.5,col="red")
+
+auc@y.values[1] #0.7752825 showing that TPR is almost 80% 0.77
+
+
+
+#Tree classifier
+library(party)
+mod.ctree <- ctree(jobs_raw_train$is_job_offer  ~ .,   data = as.data.frame(job_train))
+jobs_test_pred <- predict(mod.ctree, newdata=as.data.frame(job_train))
+
+mod.ctree@tree
+plot(mod.ctree )
+
+
 #Naive Bayes classifier.
 library(e1071)
 jobs_classifier <- naiveBayes(job_train, factor(unlist(jobs_raw_train$is_job_offer_factor)))
 jobs_test_pred <- predict(jobs_classifier, newdata=job_test)
 
 table(jobs_test_pred, jobs_raw_test$is_job_offer_factor)
-
-
-
-#Tree classifier
-mod.ctree <- ctree(jobs_raw_train$is_job_offer_factor  ~ .,   data = as.data.frame(job_train))
-plot(mod.ctree)
-
-# ¿Cuántos errores cometemos?
-reales <- as.data.frame(job_train)
-pred.ctree <- predict(mod.ctree)
-
-
-# varias maneras de ver el error
-sum(reales != pred.ctree)
-mean(reales != pred.ctree)
-table(reales, pred.ctree)
-
-plot(mod.ctree)
-
-
-
-#SBM classifier
-library(gbm)      # gbm
-library (caret)
-
-train.control <- trainControl(method = "cv", number = 10)
-grid <- expand.grid(n.trees = 1000 * 1,#1:4,
-                    interaction.depth = 2 * (1:4),
-                    shrinkage = 0.001,
-                    n.minobsinnode = 10)
-
-#siempre 10 para minobsinnode
-#shirnkage <- 0.001
-#grid es una malla con todas las posibilidades que se van a usar para entrenar
-#el modelo gbm siguiente:
-model.gbm <- train( as.character(factor(unlist(jobs_raw_train$is_job_offer_factor))) ~ ., data = job_train_pc$scores, 
-                   trControl = train.control, 
-                   tuneGrid = grid,
-                   method = "gbm")
-
-job_train_pc <- princomp(sapply(X = as.data.table(job_train),FUN = function(x) ifelse(x=="No",0,1)))
-plot(job_train_pc)
-summary(job_train_pc)
-
-sapply(X = job_train,FUN = function(x) ifelse(x=="No",0,1))
-
-
-
-# summarize results
-print(model.gbm)
-#Preproceso es escalado, etc.
-#validacion cruzada con 10 bloques (folds)
-#Accuracy SD -> desviación estándar del error.
-#El hecho de que el error está en el extremo de la rejilla quiere decir que igual
-#podría mejorar.
-
-plot(model.gbm)
-#Los colores muestran la profundidad de los árboles.
-
-table(bank.csv.test$y, predict(model.gbm, bank.csv.test))
-
-model.gbm.variableImportance <- as.data.table(summary(model.gbm))
-
-
-model.gbm.variableImportance[,relativeImportance:= rel.inf/sum(rel.inf)]
-
-setkey(model.gbm.variableImportance,relativeImportance)
-model.gbm.variableImportance <- model.gbm.variableImportance[order(-relativeImportance)]
-model.gbm.variableImportance[,relativeImportaneAcum := round(cumsum(relativeImportance),2)] 
-model.gbm.selected.features <- list(model.gbm.variableImportance[relativeImportaneAcum<.99,]$var)
-model.gbm.selected.features <- unlist(model.gbm.selected.features)
-model.gbm.selected.features <- as.character(model.gbm.selected.features)
-
-model.gbm.short <- model.gbm[,model.gbm.selected.features]
-
-
-
-
-
-
-
-jobs_dtm_test.frequencies <-  (sort(colSums(as.matrix(jobs_dtm_test)), decreasing=TRUE) )
-jobs_dtm_train.frequencies <- (sort(colSums(as.matrix(jobs_dtm_train)), decreasing=TRUE))
-
-jobs_dtm_test.frequencies$classColumn = rep(0,length(jobs_dtm_test.frequencies))
-jobs_dtm_test.frequencies <- melt(jobs_dtm_test.frequencies,id.vars="classColumn")
-jobs_dtm_train.frequencies$classColumn = rep(0,length(jobs_dtm_train.frequencies))
-jobs_dtm_train.frequencies <- melt(jobs_dtm_train.frequencies,id.vars="classColumn")
-
-head(jobs_dtm_test.frequencies,n = 1L)
-
-
-summary(unique(jobs_dtm_train.frequencies$value))
-#Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-#0.00    5.75   11.50   21.08   20.25  153.00 
-jobs_dtm_train.frequencies[jobs_dtm_train.frequencies$value>20,]
-
-rf.tdm <- as.matrix(jobs_dtm_train)
-
-rf.tdm <- as.data.table(data.frame(rf.tdm))
-rf.tdm[,is_job_offer_factor:=jobs_raw_train$is_job_offer_factor]
-
-
-set.seed(415)
-tuned <- tune.svm(V2~., data = trainset, gamma = 10^(-6:-1), cost = 10^(-1:1))
