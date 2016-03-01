@@ -1,4 +1,4 @@
-setwd("C:/Users/gonzalo/OneDrive/KSCHOOL/Proyecto")
+#setwd("C:/Users/gonzalo/OneDrive/KSCHOOL/Proyecto")
 #Required libraries:
 require(data.table)
 require(tm)
