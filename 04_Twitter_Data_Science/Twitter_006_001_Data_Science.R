@@ -1,40 +1,34 @@
-
+setwd("C:/Users/gonzalo/OneDrive/KSCHOOL/Proyecto")
 #Required libraries:
 require(data.table)
 require(tm)
 library(wordcloud)
 library(reshape)
 library(slam)
-#require(doSNOW)
-#cl <- makeCluster(2, type="SOCK")
-#registerDoSNOW(cl)
 library(party)
-#library(randomForest)
-#require(ggplot2)
-# The multiplot function has been copied from: http://www.cookbook-r.com/Graphs/Multiple_graphs_on_one_page_%28ggplot2%29/
+library(ROCR)
 
-#Getting previously saved data and changing boolean values by numeric ones:
-
+#Getting previously saved data and changing boolean values (T/F) by numeric ones (1/0):
 load("./TwitterData/002_iv_rda/alljobtweets.rda")
 tweets.dt <- as.data.table(tweets.dt)
 tweets.dt$geo_enabled <- ifelse(tweets.dt$geo_enabled,1,0)
 tweets.dt$verified <- ifelse(tweets.dt$verified,1,0)
 tweets.dt$retweeted <- ifelse(tweets.dt$retweeted,1,0)
-
-
+#Renaming datatable.
 tweets.dt.jobs <- tweets.dt
 rm(tweets.dt)
 
+#Load manually analyzed messages (3.000 messages have been classified manually)
 sample.job.messages <- as.data.table(read.csv(file="./sample_job_messages_analyzed.csv",sep = ",",header = T))
+#backup
 save(x=sample.job.messages,file="sample_job_messages.rda")
-
 
 load("./sample_job_messages.rda")
 
 
 #Adapted from: http://stackoverflow.com/questions/28248457/gsub-in-r-with-unicode-replacement-give-different-results-under-windows-compared
+#This function fixes all the unicode issues in texts, replacing them by the propert UTF8 characters.
 trueunicode.hack <- function(string){
-  
   string <- as.character(string)
   m <- gregexpr("<U\\+[0-9A-F]{4}>", string)
   if(-1==m[[1]][1])
@@ -72,9 +66,10 @@ trueunicode.hack <- function(string){
   y
 }
 
+#Fix the loaded sample messages .
 sample.job.messages$text <- sapply(sample.job.messages$text, trueunicode.hack)
 
-
+#Generic function to remove non significant characters and text structures (ie links)
 cleanText <- function(x){
   tmp <- as.character(x)
   tmp <- tolower(tmp)
@@ -96,9 +91,10 @@ cleanText <- function(x){
   return (x)
 }
 
+#Adapts tdm for regression models.
 convert_count <- function(x) {
   y <- ifelse(x > 0, 1,0)
-  y <- factor(y, levels=c(0,1), labels=c("No", "Yes"))
+  #y <- factor(y, levels=c(0,1), labels=c("No", "Yes"))
   y
 }
 
@@ -126,7 +122,6 @@ sample.job.messages$is_for_training <- sample(as.factor(c(rep((1),2250),rep((0),
 sample.job.messages.dtm <- DocumentTermMatrix(sample.job.messages.corpus,
                                               control=list(wordLengths=c(3,Inf)))
 
-#https://www3.nd.edu/~steve/computing_with_data/20_text_mining/text_mining_example.html#/15
 jobs_indices <- which(sample.job.messages$is_job_offer_factor == 1)
 noise_indices <- which(sample.job.messages$is_job_offer_factor == 0)
 training_indices <- which(sample.job.messages$is_for_training == 1)
@@ -157,6 +152,7 @@ job_test <- DocumentTermMatrix(jobs_corpus_test, control=list(dictionary = five_
 job_train <- apply(job_train, 2, convert_count)
 job_test <- apply(job_test, 2, convert_count)
 
+
 #Linear regression.
 jobs_classifier <- lm(jobs_raw_train$is_job_offer  ~ .,data = as.data.frame(job_train))
 jobs_test_pred <- predict(jobs_classifier, newdata=as.data.frame(job_test))
@@ -171,13 +167,14 @@ jobs_classifier <- glm(jobs_raw_train$is_job_offer  ~ .,family=binomial(link='lo
 summary(jobs_classifier)
 #http://www.r-bloggers.com/how-to-perform-a-logistic-regression-in-r/
 jobs.fitted.results <- predict(jobs_classifier,newdata=as.data.frame(job_test),type='response')
-jobs.fitted.results <- ifelse(fitted.results > 0.5,1,0)
+jobs.fitted.results <- ifelse(jobs.fitted.results > 0.5,1,0)
 misClasificError <- mean(jobs.fitted.results !=jobs_raw_test$is_job_offer  )
 print(paste('Accuracy',1-misClasificError))
 
-anova(jobs_classifier, test="Chisq")
+#Too many (so far) features to perform this.
+#anova(jobs_classifier, test="Chisq")
 
-library(ROCR)
+#Area Under the Curve (ROC curve)
 p <- predict(jobs_classifier,newdata=as.data.frame(job_test),type='response')
 pr <- prediction(p, as.data.frame(jobs_raw_test$is_job_offer))
 prf <- performance(pr, measure = "tpr", x.measure = "fpr")
@@ -186,23 +183,17 @@ auc <- performance(pr, measure = "auc")
 #abline(h =  auc@y.values[1],col="red")
 abline(h=0.822666666666667,col="red")
 abline(v=0.5,col="red")
-
 auc@y.values[1] #0.7752825 showing that TPR is almost 80% 0.77
-
-
 
 #Tree classifier
 library(party)
 mod.ctree <- ctree(jobs_raw_train$is_job_offer  ~ .,   data = as.data.frame(job_train))
 jobs_test_pred <- predict(mod.ctree, newdata=as.data.frame(job_train))
-
 mod.ctree@tree
 plot(mod.ctree )
-
 
 #Naive Bayes classifier.
 library(e1071)
 jobs_classifier <- naiveBayes(job_train, factor(unlist(jobs_raw_train$is_job_offer_factor)))
 jobs_test_pred <- predict(jobs_classifier, newdata=job_test)
-
 table(jobs_test_pred, jobs_raw_test$is_job_offer_factor)
