@@ -64,7 +64,8 @@ findJobsPanel <- tabPanel("Search Jobs",
                                          max = 250)
                             ,br()
                             ,strong("3. Click on the button:")
-                            ,submitButton("Go!")
+                            ,br()
+                            ,actionButton("cmdSearchTwitter","Go!")
                             
                             )
                           

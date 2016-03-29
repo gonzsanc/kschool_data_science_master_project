@@ -8,21 +8,7 @@ shinyUI(navbarPage("Twitter Jobs Seach App",
                    theme=shinytheme("spacelab"),
                   
                    findJobsPanel
-                   
-                   ,tabPanel("Discover!",
-                             sidebarPanel(
-                               
-                               p("This is the second panel")
-                               ,br()
-                               )
-                             
-                             
-                             ,mainPanel(
-                               #plotOutput("carsPlot")
-                               # DT::dataTableOutput("tblTweets")
-                               
-                             )
-                   )
+                   ,corpusPanel
 
                   
                    

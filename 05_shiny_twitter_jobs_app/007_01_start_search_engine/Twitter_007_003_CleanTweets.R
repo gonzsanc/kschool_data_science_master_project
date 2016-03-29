@@ -2,6 +2,7 @@
 #Required libraries:
 require(data.table)
 require(tm)
+require(SnowballC)
 
 messages.corpus <- NULL
 tweets.messages.dt <- NULL
