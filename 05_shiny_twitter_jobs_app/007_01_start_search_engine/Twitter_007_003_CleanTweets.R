@@ -5,6 +5,7 @@ require(tm)
 require(SnowballC)
 
 messages.corpus <- NULL
+messages.corpus.fullwords <- NULL
 tweets.messages.dt <- NULL
 
 tweets.messages.dtm <- NULL
@@ -82,7 +83,7 @@ cleanText <- function(x){
 GenCorpus <- function (sampleDF){
   
   tweets.df <- sampleDF
-  
+
   tweets.dt <- as.data.table(tweets.df)
   tweets.messages.dt <<- tweets.dt
   rm(tweets.dt)
@@ -107,6 +108,10 @@ GenCorpus <- function (sampleDF){
   
  
   messages.corpus <<- tm_map(messages.corpus, removeWords, stopwords.dt)
+
+  messages.corpus.fullwords <<- tm_map(messages.corpus, removeWords, c("\\b#\\b","tco"))
+  messages.corpus.fullwords <<- tm_map(messages.corpus, stripWhitespace)   
+  
   
   messages.corpus <<- tm_map(messages.corpus, stemDocument)
   messages.corpus <<- tm_map(messages.corpus, removeWords, c("\\b#\\b","tco"))
@@ -123,6 +128,15 @@ GenCorpus <- function (sampleDF){
   
   tweets.messages.dt$text <<- unlist(a) 
   messages.corpus <<- Corpus(VectorSource(tweets.messages.dt$text))
+  
+  
+  a<- list()
+  for (i in seq_along(messages.corpus.fullwords)) {
+    a[i] <- gettext( messages.corpus.fullwords[[i]][[1]])
+  }
+  tweets.messages.dt$text_full <<- unlist(a) 
+  
+  messages.corpus.fullwords <<- Corpus(VectorSource(tweets.messages.dt$text_full))
   
   } 
 

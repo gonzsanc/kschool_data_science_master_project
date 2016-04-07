@@ -34,9 +34,16 @@ setup_twitter_oauth(cred$consumerKey
 )
 
 
-getTweetsDataFrame <- function (query,n=250){
+getTweetsDataFrame <- function (query,n=750,preformat=T){
   
-  return( twitteR::twListToDF (searchTwitter(query,  n=n, retryOnRateLimit=1, lang = "en")))
+  tweets <- twitteR::twListToDF (searchTwitter(query,  n=n, retryOnRateLimit=1, lang = "en"))
+  
+  if (preformat){
+    tweets$text <- sapply(tweets$text,function(row) iconv(row, "latin1", "ASCII", sub=""))
+  }
+  
+  
+  return(tweets)
 }
 
 

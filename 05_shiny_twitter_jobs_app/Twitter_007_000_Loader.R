@@ -15,4 +15,3 @@ if(!exists("genTweetTabTable", mode="function"))
 #Summary Pane Contents
 if(!exists("corpusPanel", mode="function")) 
   source("./007_02_corpus/Twitter_0007_05_corpus_main.R")
-
