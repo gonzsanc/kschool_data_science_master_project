@@ -52,14 +52,18 @@ drawTermFreqPlot <- function (corpus, minFreq=10){
         #Pages of corpus -> term analysis tabsetpanel.
         tabsetPanel(
           #TERM FREQUENCY
-          tabPanel("Term Frequency", br(),plotOutput("termFreqPlot")),
+          tabPanel("Term Frequency", h2("Terms Occurrences"),plotOutput("termFreqPlot")),
           
           #PCA sample
-          tabPanel("PCA Terms Correlation", 
-                   h3("Tf-idf PCA Correlation Matrix & Variability"),
+          tabPanel("PCA Terms Correlation",
+                   h2("Tf-idf PCA Correlation Matrix & Variability"),
                    
-                   plotOutput("PCACorrelationMatrix")),
-          
+                   fluidRow(
+                   sidebarPanel(width=4,p("here is the correlation matrix")),   
+                  column(width=8,
+                   plotOutput("PCACorrelationMatrix"))
+                   ) 
+                  ),
           #TOPICS
           tabPanel("Topics" 
                    ,fluidRow(

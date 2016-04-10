@@ -197,14 +197,13 @@ genCorrplot <- function (){
     
     #ggcorr(tblPCACorrelationMatrix, hjust = 0.75, size = 2.5, color = "grey50", layout.exp = 1)
     
-    layout(matrix(c(1,2),1, 2, byrow = TRUE),
-           widths=c(12,5), heights=c(11),respect=T)
-    
-    corrplot(tblPCACorrelationMatrix,
-          method = "circle",tl.col = "orangered3",tl.cex = 20/numwords,
-          mar=c(1,1,4,1))
+    if (20/numwords<0.8){fs <- 0.8}else{fs<-20/numwords}
+  
+      corrplot(tblPCACorrelationMatrix,
+          method = "circle",tl.col = "orangered3",tl.cex =0.7  ,
+          mar=c(0,0,0,1))
 
-  plot  (tblPCAProp[1:PCA.number.of.topics],main="PCA Variance \n per topic",type="b")
+ # plot  (tblPCAProp[1:PCA.number.of.topics],main="PCA Variance \n per topic",type="b")
     
     
     }else{
