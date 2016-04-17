@@ -26,14 +26,14 @@ library(XML)
 #rm(consumerSecret)
 
 
-
-load("./auth_cred/twitter authentication.Rdata")
-options(httr_oauth_cache=F)
-setup_twitter_oauth(cred$consumerKey
-                    ,cred$consumerSecret
-                    ,cred$oauthKey
-                    ,cred$oauthSecret
-)
+#TEMPORARILY DISABLED:
+#load("./auth_cred/twitter authentication.Rdata")
+#options(httr_oauth_cache=F)
+#setup_twitter_oauth(cred$consumerKey
+#                    ,cred$consumerSecret
+#                    ,cred$oauthKey
+#                    ,cred$oauthSecret
+#)
 
 
 getTweetsDataFrame <- function (query,n=750,preformat=T){

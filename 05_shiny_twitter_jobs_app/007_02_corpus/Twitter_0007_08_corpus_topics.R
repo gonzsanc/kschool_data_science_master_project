@@ -1,6 +1,7 @@
 library(topicmodels)
 library(slam)
 library(corrplot)
+
 #library(GGally)
 
 tblPCACorrelationMatrix <- data.frame()
@@ -117,7 +118,10 @@ getLDADataTable <- function (corpus,numberOfTopics=5,method="Gibbs",recalculate=
   lda.terms.melted <- as.list(lda.terms.melted)
   lda.terms.melted$X1 <- NULL
 #  colnames(lda.terms.melted) <- c ("Topic","Term")
-  return (as.data.table(lda.terms.melted))
+  
+  rtrn <- as.data.frame(lda.terms.melted)
+  rtrn[[1]] <- NULL
+  return (as.data.table(rtrn))
 }
 
 
@@ -128,11 +132,88 @@ getLDADataTable <- function (corpus,numberOfTopics=5,method="Gibbs",recalculate=
 #Get topics iof ratings...
 #lda.model <-GenLDATopicsAnalysis (corpus = corpus,numberOfTopics = numberOfTopics)
 
+#====================
+#Messages with Topics
+#====================
+
+#SEGUIR POR AQUI.
+genMessagesWithTopics <- function(method=""){
+  if (is.numeric(LDA.model)){return (NULL)}
+  df <- data.frame(melt(topics(LDA.model$VEM,1)))
+  df$docId <- as.numeric(row.names(df))
+  colnames(df) <- c("Topic","Tweet")
+  df$LDAMethod <- ""
+  sbset <- tweets.messages.dt[df$Tweet,c("id","text_original","screenName","created"),with=F]
+  sbset$text_original <- gsub("[\r\n]"," ",sbset$text_original)
+  sbset$text_original <- gsub("  "," ",sbset$text_original)
+
+  df <- df[,c("Tweet","Topic","LDAMethod")]
+  rtrn <- as.data.table(cbind (df,sbset))
+  rtrn$LDAMethod <- method
+  return(rtrn)
+  }
 
 #==================================================================
 #  PCA ANALYSIS
 #==================================================================
+
 genTopicsCorrPCAObjects <- function(corpus, minFreq, numberOfTopics){
+  
+  #corpus <- messages.corpus
+  #minFreq <- sqrt(length(corpus))
+  #numberOfTopics <- 6
+
+  PCA.number.of.topics <<- numberOfTopics
+  variance.to.explain <- 0.99
+  
+  tdm <- getTDMbyFreq(corpus,minFreq)
+  tdm <- as.data.frame(as.matrix(tdm))
+  tdm <- as.data.frame(t(tdm))
+  tdm <- tdm + 0.00000000001
+  tdm <- log(tdm)
+  tdm.cor <- cor(tdm)
+  
+  tdm.pca <- prcomp(tdm.cor)
+  PCA.model <<- tdm.pca 
+  tdm.pca.contribution.groups <- round(100*(tdm.pca$sdev)^2 / sum(tdm.pca$sdev^2),6)
+
+  tblPCACumulativeContribution <<- cumsum((tdm.pca$sdev)^2 / sum(tdm.pca$sdev^2))
+  tdm.pca.contribution.groups <- as.data.table(t(tdm.pca.contribution.groups))
+  
+  tdm.terms <- colnames(tdm) 
+  colnames(tdm.pca.contribution.groups) <- colnames(tdm.pca$x)
+
+  #vars <- apply(tdm.pca$x, 2, var)  
+  #props <- vars / sum(vars)
+  #tblPCAProp <<- props
+  
+  #tdm.pca.cumulative.contribution <- cumsum(props)
+  
+  #tblPCATopicsAbsoluteContribution <<- colSums(abs(tdm.pca$x))
+  #tblPCATopicsAbsoluteContribution/tblPCATotalContribution
+  pca.range.to.get <- 
+    length(tblPCACumulativeContribution[tblPCACumulativeContribution<variance.to.explain])+ 1
+  
+  pca.range.to.get <- min(pca.range.to.get,10)
+  df.pca.rel <- tdm.pca.contribution.groups[,1:pca.range.to.get,with=F]
+
+  #extrae los pesos de cada componente.
+
+  tblPCATopicsRelativeContribution <<- as.data.frame(df.pca.rel)
+  
+  #row.names (tblPCATopicsRelativeContribution ) <- unlist(tdm.terms)[1:length(df.pca.rel)]
+  
+    barplot(as.matrix(df.pca.rel), las=2,main="Corpus PCA"
+            ,names.arg=colnames(tdm.pca.contribution.groups)[1:length(df.pca.rel)]
+            ,col="tomato",ylab = "Variance Explained",xlab="Groups"
+            ,ylim=c(0,100)
+            )
+    lines(x = tblPCACumulativeContribution*100,type = "both")
+ 
+}
+
+
+getPCACorrMatrix <- function(corpus, minFreq, numberOfTopics){
   
   #corpus <- messages.corpus
   #minFreq <- sqrt(length(corpus))
@@ -147,63 +228,44 @@ genTopicsCorrPCAObjects <- function(corpus, minFreq, numberOfTopics){
   tdm <- log(tdm)
   tdm.cor <- cor(tdm)
   tblPCACorrelationMatrix <<-tdm.cor
-  tdm.pca <- prcomp(tdm.cor)
-  
-  PCA.model <<- tdm.pca 
-  
-  tdm.terms <- colnames(tdm) 
-  
-  vars <- apply(tdm.pca$x, 2, var)  
-  props <- vars / sum(vars)
-  tblPCAProp <<- props
-  
-  tdm.pca.cumulative.contribution <- cumsum(props)
-  
-  
-  tblPCATopicsAbsoluteContribution <<- colSums(abs(tdm.pca$x))
-  tblPCACumulativeContribution <<- tdm.pca.cumulative.contribution
-  
-  
-  #tblPCATopicsAbsoluteContribution/tblPCATotalContribution
-  pca.range.to.get <- 
-    length(tdm.pca.cumulative.contribution[tdm.pca.cumulative.contribution<variance.to.explain])+ 1
-  
-  df.pca <- as.data.table(tdm.pca$x)[,1:pca.range.to.get,with=F]
-  df.pca <- as.data.table(abs(df.pca))
-  
-  #extrae los pesos de cada componente.
-  df.pca.rel <- as.data.table(lapply(df.pca, function(x) {x/sum(x)}))
-  
-  tblPCATopicsAbsoluteContribution <<- as.data.frame(df.pca)
-  tblPCATopicsRelativeContribution <<- as.data.frame(df.pca.rel)
-  
-  row.names (tblPCATopicsAbsoluteContribution ) <- unlist(tdm.terms)
-  row.names (tblPCATopicsRelativeContribution ) <- unlist(tdm.terms)
-  
-  #plot(tdm.pca)
-  #df.pca
-  pca_vars <- rownames(tdm.pca$x)
-  pca_labels <- colnames(df.pca.rel)
-  
+  tblPCACorrelationMatrix
 
-
+  numwords <- length(tblPCACorrelationMatrix[,1])
+  if(numwords<100){
+    
+    #ggcorr(tblPCACorrelationMatrix, hjust = 0.75, size = 2.5, color = "grey50", layout.exp = 1)
+    
+    
+    corrplot(tblPCACorrelationMatrix,
+             method = "circle",tl.col = "orangered3",tl.cex = min(20/numwords,12),
+             mar=c(0,0,0,0))
+    
+  }else{
+    
+    plot(c(0, 1), c(0, 1), ann = F, bty = 'n', type = 'n', xaxt = 'n', yaxt = 'n')
+    text(x = 0.5, y = 0.7, paste0("Too many terms.\n Please increase term frequency"), 
+         cex = 1.6, col = "black")
+  }
 }
 
 
-genCorrplot <- function (){
+
+
+genCorrplotOld <- function (){
     
   numwords <- length(tblPCACorrelationMatrix[,1])
   if(numwords<100){
     
     #ggcorr(tblPCACorrelationMatrix, hjust = 0.75, size = 2.5, color = "grey50", layout.exp = 1)
     
-    if (20/numwords<0.8){fs <- 0.8}else{fs<-20/numwords}
-  
-      corrplot(tblPCACorrelationMatrix,
-          method = "circle",tl.col = "orangered3",tl.cex =0.7  ,
-          mar=c(0,0,0,1))
+    layout(matrix(c(1,2),1, 2, byrow = TRUE),
+           widths=c(12,5), heights=c(11),respect=T)
+    
+    corrplot(tblPCACorrelationMatrix,
+          method = "circle",tl.col = "orangered3",tl.cex = 20/numwords,
+          mar=c(1,1,4,1))
 
- # plot  (tblPCAProp[1:PCA.number.of.topics],main="PCA Variance \n per topic",type="b")
+  plot  (tblPCAProp[1:PCA.number.of.topics],main="PCA Variance \n per topic",type="b")
     
     
     }else{

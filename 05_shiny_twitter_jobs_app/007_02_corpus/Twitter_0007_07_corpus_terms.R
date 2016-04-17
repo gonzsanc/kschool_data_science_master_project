@@ -1,4 +1,4 @@
-library(igraph)
+#library(igraph)
 require(SnowballC)
 require(tm)
 #require (ggplot2)
@@ -30,7 +30,7 @@ drawTermFreqPlot <- function (corpus, minFreq=10){
   f <- ggplot(tdm.matrix.termsFreq , aes(x = reorder(term,-count) , y = count))
   f + geom_bar(aes(color=term),
                stat="identity", fill="white") +
-  xlab("Terms") + ylab("Count") + 
+  xlab("Terms") + ylab("Occurrences") + 
   geom_text(aes(label=count), hjust=-0.5, size=3.0) +
   coord_flip(ylim = c(0, max(tdm.matrix.termsFreq$count)*1.05))
 }
@@ -52,17 +52,47 @@ drawTermFreqPlot <- function (corpus, minFreq=10){
         #Pages of corpus -> term analysis tabsetpanel.
         tabsetPanel(
           #TERM FREQUENCY
-          tabPanel("Term Frequency", h2("Terms Occurrences"),plotOutput("termFreqPlot")),
+          tabPanel("Term Frequency", h2("Number of Term Occurrences"),plotOutput("termFreqPlot")),
           
           #PCA sample
-          tabPanel("PCA Terms Correlation",
+          tabPanel("PCA Terms Correlation", 
                    h2("Tf-idf PCA Correlation Matrix & Variability"),
-                   
-                   fluidRow(
-                   sidebarPanel(width=4,p("here is the correlation matrix")),   
-                  column(width=8,
-                   plotOutput("PCACorrelationMatrix"))
-                   ) 
+                  fluidRow(   
+                    sidebarPanel(width=5,
+                                 plotOutput("PCAVariance"),
+                                 hr(),
+                                 p("Regularization with unsupervised Principal Component Analysis is used
+                                   for both reducing data dimensionality and organizing the data
+                                   into clusters. The generated groups, namely the components, may also
+                                   be considered as a topic collection that defines the composition of the corpus. 
+                                    Each of the groups PCA components is linearly independent, 
+                                  allowing redundance removal fom the data and revealing the latent corpus subjects. 
+                                    Among the major drawbacks of PCA decomposition is that
+                                    the model is not neither easy to interpret nor to transform. 
+                                    Other methods, such as LDA classification are very frequently used to extract 
+                                    topics from texts too.")
+                                 
+                                 
+                                 ),
+                    column(width=7,
+                            fluidRow(plotOutput("PCACorrelationMatrix"))
+                     ,
+                    br(),
+                    hr(),
+                    br(),
+                     p("The correlation or covariance matrix displays the strenght and direction of 
+                       the associations among temrs across the corpus. It is created from
+                       the term document matrix, extracting the correlation among terms."),
+                    p("The scores in the term document matrix are usually
+                        normalized, in either logarithmic or binary unscaled weights.
+                      The most popular score transformation is Term frequency - inverse document frequency
+                      because it allows to remove noise and highlight the most characteristic and
+                      significative terms that constitute the signal in the corpora.")
+                    ,p("As the term frequency requierement is increased (numeric box above), it may be verified 
+                      how more specific terms are isolated and the PCA model improves because the noise is reduced, corresponding 
+                       to the same technique as in Tf-idf scoring.")
+                    )
+                  )
                   ),
           #TOPICS
           tabPanel("Topics" 
@@ -79,15 +109,22 @@ drawTermFreqPlot <- function (corpus, minFreq=10){
                                    "Gibbs Sampling" = "Gibbs",
                                    "CTM model" = "CTM"
                                    ))
-                     ,
-                     downloadButton("downloadLDA","Download Data")
+                     
+
+                     #,downloadButton("downloadLDA","Download Data")
                      
                      ) 
                      ,
                      column(width = 4,
-                            sliderInput("numberOfTopicsSlider", label="Number of Topics",min = 1,max=50,value = 2,step = 1)
-                     )
+                            sliderInput("numberOfTopicsSlider", label="Number of Topics",min = 2,max=100,value = 2,step = 1)
+                            #,downloadButton("downloadTopics","Download Messages")
+                            )
                    )#eof fluidrow
+                   ,fluidRow(
+                      column(width = 4,p()),
+                      column(width = 4,downloadButton("downloadLDA","Download Data")),
+                      column(width = 4,downloadButton("downloadMessagesLDA","Download Messages"))
+                   )
                     ,hr()
                    ,fluidRow (
                      column(width = 12, DT::dataTableOutput("tblLDA"))  
@@ -95,7 +132,7 @@ drawTermFreqPlot <- function (corpus, minFreq=10){
                    ) #https://rstudio-pubs-static.s3.amazonaws.com/66739_c4422a1761bd4ee0b0bb8821d7780e12.html
           
           
-        )
+        ),style='width: 900px;'
           
       )
       

@@ -53,12 +53,12 @@ genTweetTabTable <- function(tweets.messages.dt){
 
 
 #Generates the find jobs panel.
-findJobsPanel <- tabPanel("Search Jobs",
+findJobsPanel <- tabPanel("Search Twitter",
                           sidebarPanel(
                             
                             textInput("txtSearchBox", "1. Insert search string:","")
                             ,sliderInput("n", 
-                                         "2. Set number of tweets to get:", 
+                                         "2. Set number of tweets to retrieve:", 
                                          value = 250,
                                          min = 1, 
                                          max = 500)
@@ -66,6 +66,11 @@ findJobsPanel <- tabPanel("Search Jobs",
                             ,strong("3. Click on the button:")
                             ,br()
                             ,actionButton("cmdSearchTwitter","Go!")
+                            ,br()
+                            ,br()
+                            ,br()
+                          
+                            ,strong("4. Wait up to 30 seconds...")
                             
                             )
                           

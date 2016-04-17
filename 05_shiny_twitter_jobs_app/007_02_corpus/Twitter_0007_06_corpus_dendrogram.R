@@ -96,13 +96,13 @@ drawDendrogramOld <- function (corpus,
 #    i.R
 #    ==================================
 #    Generates the find jobs subpanel.
-    DendrogramtabPanel <- tabPanel("Dendrogram",
+    DendrogramtabPanel <- tabPanel("Clustering",
                             
                               fluidRow(
                                 column(3,
                                        
                                      sliderInput('ddSparsity', 'Matrix Sparsity', 
-                                                 min=0.01, max=0.9999, value=0.98, 
+                                                 min=0.50, max=0.9999, value=0.98, 
                                                  step=0.002)
                                     )
                               
