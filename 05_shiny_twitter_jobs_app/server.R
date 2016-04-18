@@ -44,11 +44,10 @@ shinyServer(function(input, output) {
   #Term Frequency schedule
     
     output$termFreqPlot <- 
-      renderPlot({
+      renderChart2 ({
         input$cmdSearchTwitter
-        drawTermFreqPlot(messages.corpus,
-                       input$termFreq
-        )
+        p <- drawTermFreqPlot (messages.corpus,input$termFreq)
+        return (p)
     })
     
     

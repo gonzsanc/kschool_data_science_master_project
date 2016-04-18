@@ -1,4 +1,4 @@
-
+library(rCharts)
 #Twitter search function
 if(!exists("getTweetsDataFrame", mode="function")) 
   source("./007_01_start_search_engine/Twitter_007_001_SearchTwitter.R")

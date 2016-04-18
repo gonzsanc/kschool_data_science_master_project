@@ -1,6 +1,7 @@
 #library(igraph)
 require(SnowballC)
 require(tm)
+require(rCharts)
 #require (ggplot2)
 
 #Generates TDM filtered by term frequency.
@@ -14,8 +15,35 @@ getTDMbyFreq <- function (corpus,
   return(tdm)
 }
 
-#Draws a term frequency plot filtered by minimun term occurence.
+
 drawTermFreqPlot <- function (corpus, minFreq=10){
+  #debug corpus<-messages.corpus
+  #debug minFreq<-10
+  tdm <- getTDMbyFreq(corpus,minFreq)
+  tdm.matrix <- as.matrix(tdm)
+  tdm.matrix.termsFreq <- colSums(t(tdm.matrix))
+  tdm.matrix.termsFreq <-melt(tdm.matrix.termsFreq)
+  
+  tdm.matrix.termsFreq$term <- rownames(tdm.matrix.termsFreq)
+  colnames(tdm.matrix.termsFreq) <- c("count","term")
+  tdm.matrix.termsFreq <- tdm.matrix.termsFreq[order(tdm.matrix.termsFreq$count,decreasing = T),]
+  
+  p <- nPlot(count ~ term, 
+             data =as.data.frame(tdm.matrix.termsFreq),
+             type = 'multiBarHorizontalChart'
+             ,heigth=10
+  )
+ 
+  p$params$height <- 500
+  if (nrow(tdm.matrix.termsFreq)>25){
+    p$params$height <- 500 + 20 * (nrow(tdm.matrix.termsFreq)-25)
+  }
+  
+  return (p)
+}
+
+#Draws a term frequency plot filtered by minimun term occurence.
+drawTermFreqPlotOld <- function (corpus, minFreq=10){
   #debug corpus<-messages.corpus
   #debug minFreq<-10
   tdm <- getTDMbyFreq(corpus,minFreq)
@@ -52,7 +80,7 @@ drawTermFreqPlot <- function (corpus, minFreq=10){
         #Pages of corpus -> term analysis tabsetpanel.
         tabsetPanel(
           #TERM FREQUENCY
-          tabPanel("Term Frequency", h2("Number of Term Occurrences"),plotOutput("termFreqPlot")),
+          tabPanel("Term Frequency", h2("Number of Term Occurrences"),showOutput("termFreqPlot","nvd3")),
           
           #PCA sample
           tabPanel("PCA Terms Correlation", 
