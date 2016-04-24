@@ -1,3 +1,6 @@
+#THIS MODULE IS NOT USED BY THE APPLICATION.
+#This module was just used to prepare classification model.
+
 source(file = "./007_03_classification/data_preparation/DataPreparationCorpus.R")
 require(data.table)
 require(tm)

@@ -1,3 +1,4 @@
+library(gbm)
 library(rCharts)
 #Twitter search function
 if(!exists("getTweetsDataFrame", mode="function")) 
@@ -16,7 +17,7 @@ if(!exists("genTweetTabTable", mode="function"))
 if(!exists("corpusPanel", mode="function")) 
   source("./007_02_corpus/Twitter_0007_05_corpus_main.R")
 
-
+#Generates pastel colors.
 getRandomColors <- function (len = 1,colorMix = c(255,255,255)){
   
   #debug   len=1

@@ -68,7 +68,7 @@ shinyServer(function(input, output) {
     })
     
     
-    
+  #Latent topics     
     output$tblLDA <- DT::renderDataTable({
       input$LDAMethod
       input$numberOfTopicsSlider
@@ -113,42 +113,31 @@ shinyServer(function(input, output) {
     )
 
     
-    ######CLASSIFICATION
+    ######CLASSIFICATION GBM
       source("007_03_classification/classification_server.R")
       #STATUS TEXTBOX
-      status <- reactiveValues()
-      status$value <- "  Ready"
       #JobsTable
       jobsTable <- reactiveValues()
       jobsTable$value <- DT::datatable(data = data.frame())
       
-      output$status <- renderText({
-        paste0("Status:\n",status$value)
-      })
-      
       
       output$jobsTable <- DT::renderDataTable({
         input$predict
+        
+        scor <- reactiveValues()
+        spar <- reactiveValues()
+        sens <- reactiveValues()
+        scor$value = isolate(input$scoring)
+        spar$value = isolate(input$sldSparsityGBM)
+        sens$value = isolate(input$sldSensibility)
+        
+        
         if(!is.null(messages.corpus)){
-          status$value <- "Predicting..."
-          p <- getPrediction()
-          jobs <- getPredictedJobs(p)
-          jobsTable$value <- DT::datatable(as.data.table(jobs),
-                                           options = list(pageLength = 10), 
-                                           escape = c(1,2)
-          )}
+          p <- getPrediction(sparsity = spar$value, sensibility = sens$value)
+          jobs <- getPredictedJobs(classifiedMessages = p,method = scor$value)
+          jobsTable$value <- DT::datatable(jobs)}
         jobsTable$value
       })
-      
-      #STATUS TEXTBOX
-      #updatePredictionData <- function(){
-      #  input$refresh
-      # if (!is.null(messages.corpus)){
-      #    status$value <- "Refreshing..."
-      #    getPrediction(refreshData = T)
-      #    status$value <- "Ready"
-      # }
-      #}
       
       
 })#END OF SERVER

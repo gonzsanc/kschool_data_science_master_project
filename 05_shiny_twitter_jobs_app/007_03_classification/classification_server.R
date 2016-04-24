@@ -12,7 +12,7 @@ predictTextClassification <- function(input) {
 }
 
 
-
+#Returns Document term matrix which scores are term frequencies across documents.
 getFrequenceDTM <- function (corpus){
   res <- DocumentTermMatrix(corpus, control=list(wordLengths=c(3,Inf)))
   five_times_words <- findFreqTerms(res, 5)
@@ -20,7 +20,9 @@ getFrequenceDTM <- function (corpus){
   
   return (res)
 }
-#Returns a DTM of temr Tf-idf scores
+
+
+#Returns a DTM of term Tf-idf scores
 getTfidfDTM <- function (corpus){
   res <- DocumentTermMatrix(corpus, control= list(wordLengths=c(3,Inf)))
   five_times_words <- findFreqTerms(res, 5)
@@ -32,6 +34,9 @@ getTfidfDTM <- function (corpus){
 }
 
 
+#Generates a standard table with fixed column names and number.
+#If the dataframe does not contain any of the standard columnames, they are created.
+#Any existing column in the dataframe not matching the column names is dropped off.
 get.standard.record <- function(columnNames,dataFrame){
   
   dataFrame <- as.data.frame(dataFrame)
@@ -59,6 +64,7 @@ get.standard.record <- function(columnNames,dataFrame){
 
 gmb.predictions <- list()
 
+#Generates the precalculated models that will be used to predict values.
 getPredictionDataDTM <- function (sparsity=0.98){
   fp <- FactoryPredictor
   predDataDTM <- list()
@@ -82,6 +88,7 @@ getPredictionDataDTM <- function (sparsity=0.98){
   return(predDataDTM)
 }
 
+#Returns all the prediction models for the dataset.
 getGBMPredictionSet <- function (dataSet){
   models <- FactoryPredictor$makeGBMPredictor$model
   pred <- list()
@@ -97,34 +104,46 @@ getGBMPredictionSet <- function (dataSet){
   return(pred)  
 }
 
-getPrediction  <- function (sparsity=0.98){
+#Returns a table containing the messages and their classification as jobs or otherwise.
+getPrediction  <- function (sparsity=0.98,sensibility=0.5){
     predDataDTM <- getPredictionDataDTM  (sparsity)
     pred <- getGBMPredictionSet(predDataDTM)
     classifiedMessages <- list()
     
-    freqClassification <- ifelse(pred$freq>=0.5,T,F)
-    tfidfClassification <- ifelse(pred$tfidf>=0.5,T,F) 
+    freqScores <- round(100*pred$freq,2)
+    tfidfScores <- round(100*pred$tfidf,2)
+    freqClassification <- ifelse(pred$freq>=sensibility,T,F)
+    tfidfClassification <- ifelse(pred$tfidf>=sensibility,T,F) 
    
     classifiedMessages$id <- tweets.messages.dt$id
     classifiedMessages$text <- tweets.messages.dt$text_original
     classifiedMessages$freqClassification <- freqClassification
     classifiedMessages$tfidfClassification <- tfidfClassification
+    classifiedMessages$freqScores <- freqScores
+    classifiedMessages$tfidfScores <- tfidfScores
     classifiedMessages <- as.data.frame(classifiedMessages)
-    colnames(classifiedMessages) <- c("id","text","freqClassification","tfidfClassification")
+    colnames(classifiedMessages) <- 
+      c(
+        "id","text","freqClassification","tfidfClassification","freqScores","tfidfScores"
+        )
     return(as.data.frame(classifiedMessages))
 }
 
+#Returns a table with only those messages classified as job offers using the previously
+#built models.
 
-#Seguir por aquí
-getPredictedJobs <- function (classifiedMessages,method="freq"){
- rtrn <- NULL
- 
- if (method=="freq"){
+getPredictedJobs <- function (classifiedMessages,method="tfi"){
+  rtrn <- NULL 
+
+ if (method=="frq"){
    rtrn <- classifiedMessages[classifiedMessages$freqClassification==T,]
- }else{
-   rtrn <- classifiedMessages[classifiedMessages$freqClassification==F,]
+   rtrn <- rtrn[,c("id","text","freqScores")]
+   }else{
+   rtrn <- classifiedMessages[classifiedMessages$tfidfClassification==T,]
+   rtrn <- rtrn[,c("id","text","tfidfScores")]  
+   }
+
+  colnames(rtrn)<-c("Tweet ID","Tweet Message","Prediction Score (%)")
+return(rtrn)
  }
- 
- rtrn <- rtrn[,c("id","text")]
-}
 

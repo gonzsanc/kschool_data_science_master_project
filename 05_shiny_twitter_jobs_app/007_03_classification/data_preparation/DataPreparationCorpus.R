@@ -1,9 +1,11 @@
-#setwd("C:/Users/gonzalo/OneDrive/KSCHOOL/Proyecto/proyecto-fin-master")
-#library(FactoMineR)
-# require(data.table)
+#THIS MODULE IS NOT USED BY THE APPLICATION.
+#This module was just used to prepare the data for the model.
 
+#setwd("C:/Users/gonzalo/OneDrive/KSCHOOL/Proyecto/proyecto-fin-master")
+#All significative feature selection
 library(Boruta)
 library(tm)
+
 #Converts a dataframe having the specified column names
 #The function removes all the columns not included in the columnames list
 #The function preserves all the data from the columns which names match the ones in the columnNames list.
@@ -32,8 +34,7 @@ get.standard.record <- function(columnNames,dataFrame){
   return (dataFrame)  
 }
 
-
-#12.4Mb Object storing text and corpora for testing and tranining.
+#Generates all the objects for testing and for training the learning machines.
 getTestTrainCorpora <- function (){
   load ("007_03_classification/data_objects/sample.job.messages.corpus.rda")
   load ("007_03_classification/data_objects/sample.jobs.messages.processed.rda")
@@ -74,11 +75,6 @@ getFrequenceDTM <- function (corpus){
 }
 #Returns a DTM of temr Tf-idf scores
 getTfidfDTM <- function (corpus){
-  #  load("007_03_classification/data_objects/sample.job.messages.dtm.rda")
-  # load("007_03_classification/data_objects/sample.job.messages.corpus.rda")
-  #corpus <- getTestTrainCorpora()
-  #  res <- DocumentTermMatrix(corpus$messageTrainCorpus, control= list(wordLengths=c(3,Inf)))
-  # corpus <- corpus$messageTrainCorpus
 
   load("007_03_classification/data_objects/sample.job.messages.dtm.rda")
   res <- DocumentTermMatrix(corpus, control= list(wordLengths=c(3,Inf)))
@@ -90,7 +86,6 @@ getTfidfDTM <- function (corpus){
     
     rm (sample.job.messages.dtm)
     return (res)
-  
 }
 
 

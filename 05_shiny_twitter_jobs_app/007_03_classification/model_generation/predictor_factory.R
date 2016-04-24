@@ -1,3 +1,4 @@
+#FACTORY PATTERN TO MAKE PREDICTORS.
 if (!require(dismo)) require(dismo)
 
 #General Factory function.
