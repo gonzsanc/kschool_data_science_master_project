@@ -1,17 +1,15 @@
-source("007_03_classification/data_preparation/DataPreparationUI.R")
+source("007_03_classification/layout//DataPreparationUI.R")
 
 
 
 classificationPanel <- 
-  tabPanel("Data Configuration",dataPreparationUI())        
+  tabPanel("Job Extractor",dataPreparationUI())        
                                      
 
-
 classificationPanelOld <- navbarMenu("Extract Jobs"
-                          ,tabPanel("Data Configuration",dataPreparationUI())        
+                          ,tabPanel("Gradient Boosting")
                           ,tabPanel("Linear Regression") 
                           ,tabPanel("Decision Tree")
-                          ,tabPanel("Gradient Boosting")
                           ,tabPanel("Random Forest")
                           ,tabPanel("SVM")
                           ,tabPanel("Neural Network")

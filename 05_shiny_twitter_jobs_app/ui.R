@@ -15,3 +15,4 @@ shinyUI(navbarPage("Twitter Jobs Seach App Prototype",
                    
   ))
 
+

@@ -1,10 +1,11 @@
 #library(rsconnect) 
 #deployApp("C:/Users/gonzalo/OneDrive/KSCHOOL/Proyecto/proyecto-fin-master")
 #options(shiny.host = "0.0.0.0")
-
-
+source("007_03_classification/classification_server_external.R")
 
 shinyServer(function(input, output) {
+  
+  #SERVER BODY.
   cmdSearchTwitter_counter <- 1
   oldmethod <- "N/A"
 #SEARCH TAB =========================================================================
@@ -117,14 +118,38 @@ shinyServer(function(input, output) {
       #STATUS TEXTBOX
       status <- reactiveValues()
       status$value <- "  Ready"
+      #JobsTable
+      jobsTable <- reactiveValues()
+      jobsTable$value <- DT::datatable(data = data.frame())
       
       output$status <- renderText({
         paste0("Status:\n",status$value)
       })
-      #STATUS TEXTBOX
-  
       
-        
-  
+      
+      output$jobsTable <- DT::renderDataTable({
+        input$predict
+        if(!is.null(messages.corpus)){
+          status$value <- "Predicting..."
+          p <- getPrediction()
+          jobs <- getPredictedJobs(p)
+          jobsTable$value <- DT::datatable(as.data.table(jobs),
+                                           options = list(pageLength = 10), 
+                                           escape = c(1,2)
+          )}
+        jobsTable$value
+      })
+      
+      #STATUS TEXTBOX
+      #updatePredictionData <- function(){
+      #  input$refresh
+      # if (!is.null(messages.corpus)){
+      #    status$value <- "Refreshing..."
+      #    getPrediction(refreshData = T)
+      #    status$value <- "Ready"
+      # }
+      #}
+      
+      
 })#END OF SERVER
   

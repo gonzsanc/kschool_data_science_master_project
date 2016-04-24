@@ -1,3 +1,37 @@
+#setwd("C:/Users/gonzalo/OneDrive/KSCHOOL/Proyecto/proyecto-fin-master")
+#library(FactoMineR)
+# require(data.table)
+
+library(Boruta)
+library(tm)
+#Converts a dataframe having the specified column names
+#The function removes all the columns not included in the columnames list
+#The function preserves all the data from the columns which names match the ones in the columnNames list.
+get.standard.record <- function(columnNames,dataFrame){
+  
+  dataFrame <- as.data.frame(dataFrame)
+  #print (dataFrame)
+  
+  #Inserts in the dataframe the columns in the list that are missing.
+  cols <- !(columnNames %in% colnames(dataFrame))
+  if (length(cols)>0)
+    cols <- columnNames[cols]
+  for(i in cols) {
+    #print (i)
+    dataFrame[,i] <- 0
+  }
+  
+  #Removes all the columns of the dataframe not in the columnNames list.
+  cols <- !(colnames(dataFrame) %in% columnNames)
+  if(length(cols)>0){
+    for(i in names(dataFrame)[cols]) {
+      dataFrame[,i] <- NULL
+    }
+  }
+  
+  return (dataFrame)  
+}
+
 
 #12.4Mb Object storing text and corpora for testing and tranining.
 getTestTrainCorpora <- function (){
@@ -41,7 +75,7 @@ getFrequenceDTM <- function (corpus){
 #Returns a DTM of temr Tf-idf scores
 getTfidfDTM <- function (corpus){
   #  load("007_03_classification/data_objects/sample.job.messages.dtm.rda")
-  #load("007_03_classification/data_objects/sample.job.messages.corpus.rda")
+  # load("007_03_classification/data_objects/sample.job.messages.corpus.rda")
   #corpus <- getTestTrainCorpora()
   #  res <- DocumentTermMatrix(corpus$messageTrainCorpus, control= list(wordLengths=c(3,Inf)))
   # corpus <- corpus$messageTrainCorpus
@@ -78,58 +112,60 @@ getDTMToMatrix <-function (dtm){
 #########  PCA #######################
 #Extracts significative terms by PCA reduction over term document matrix.
 
-getSignificativeTerms <- function (dtm,variability=0.99,sparsity=0.99){
+getSignificativeTerms <- function (dtm,sparsity=0.99,method="tfidf"){
   #  load("007_03_classification/data_objects/sample.job.messages.corpus.rda")
+  # load ("007_03_classification/data_objects/sample.jobs.messages.processed.rda")
   # dtm <- getTfidfDTM(sample.job.messages.corpus)
+    dtm <- getFrequenceDTM(corpus = sample.job.messages.corpus)
+
   dtm <- removeSparseTerms(dtm, sparsity)
   
-  dtm.cor <- (as.matrix(dtm))
-  dtm.cor <- as.data.frame(t(dtm.cor))
+  dtm <- (as.matrix(dtm))
+  dtm <- as.data.frame((dtm))
   
   #http://michael.hahsler.net/SMU/CSE7337/install/tm.R
   #Normalization for euclidean distances.
   norm_eucl <- function(m) m/apply(m, MARGIN=1, FUN=function(x) sum(x^2)^.5)
-  dtm.cor <- norm_eucl(dtm.cor)
-  dtm.cor <- dtm.cor + 1e-16
-  dtm.cor <- log(dtm.cor)
-  tdm.cor <- cor(dtm.cor)
-  tdm.pca <- prcomp(dtm)
+  #dtm <- norm_eucl(dtm)
+  dtm <- scale(x=dtm,scale = F,center = T)
+  #dtm <- dtm + 1e-16
+ 
+  dtm.dt <-data.table(dtm)
+  dtm.dt$is_job_offer <- sample.job.messages$is_job_offer
   
-  tdm.pca.contribution.groups <- round(100*(tdm.pca$sdev)^2 / sum(tdm.pca$sdev^2),6)
-  tdm.pca.contribution.groups <- as.data.table(t(tdm.pca.contribution.groups))
+  vars.to.test <- colnames(dtm.dt)
   
-  tblPCACumulativeContribution <- cumsum((tdm.pca$sdev)^2 / sum(tdm.pca$sdev^2))
+  sample.df <- dtm.dt[,c(vars.to.test),with=F]
+  sample.df <- as.data.table(sample.df)
+  idx <- seq(1,nrow(sample.df),1)
+  idx <- sample(idx,size = 0.7*nrow(sample.df))
+  #idx <- createDataPartition(sample.df$is_job_offer,p=0.01,list=FALSE)
+  sample.df <- sample.df[idx,]
   
-  tdm.terms <- colnames(dtm) 
-  colnames(tdm.pca.contribution.groups) <- colnames(tdm.pca$x)
-  
-  pca.range.to.get <- 
-    length(tblPCACumulativeContribution[tblPCACumulativeContribution<variability])+ 1
-  
-  #pca.range.to.get <- min(pca.range.to.get,10) <-- for visualization purposes only.
-  df.pca.rel <- tdm.pca.contribution.groups[,1:pca.range.to.get,with=F]
-  df.pca.rel <- df.pca.rel/1e2
-  #extrae los pesos de cada componente.
-  
-  
-  tblPCATopicsRelativeContribution <- as.data.frame(df.pca.rel)
+  boruta_output <- Boruta(is_job_offer ~ ., data=na.omit(sample.df), doTrace=2) 
+  boruta_signif <- names(boruta_output$finalDecision[boruta_output$finalDecision %in% c("Confirmed", "Tentative")])  # collect Confirmed and Tentative variables
+  print(boruta_signif)  # significant variables
+#tfidf
+ # [1] "account"    "alert"      "appli"      "bank"       "care"       "cook"       "design"    
+  # [8] "develop"    "doctor"     "driver"     "engin"      "good"       "hire"       "job"       
+  #[15] "journalist" "love"       "manag"      "market"     "model"      "nurs"       "peopl"     
+  #[22] "sale"       "student"    "work"  
 
+  tfIdfFeatures <- c('account','alert','appli','bank','care','cook','design','develop','doctor','driver','engin','good','hire','job','journalist','love','manag','market','model','nurs','peopl','sale','student','work')
+#Freq:
+  #[1] "account"    "alert"      "appli"      "bank"       "busi"       "care"       "cook"      
+  #[8] "design"     "develop"    "doctor"     "driver"     "engin"      "good"       "hire"      
+  #[15] "job"        "journalist" "love"       "manag"      "model"      "nurs"       "open"      
+  #[22] "sale"       "student"    "teacher"    "today"      "work"
+
+  freqFeatures<- c('account','alert','appli','bank','busi','care','cook','design','develop','doctor','driver','engin','good','hire','job','journalist','love','manag','model','nurs','open','sale','student','teacher','today','work')
   
-  return(tdm.pca)
+  borutaFeatures <- list()
+  borutaFeatures$tfIdfFeatures <-tfIdfFeatures
+  borutaFeatures$freqFeatures <- freqFeatures
+
+  save(file="./007_03_classification/data_objects/borutaFeatures.rda",borutaFeatures)
+  
+  plot(boruta_output, cex.axis=.7, las=2, xlab="", main="Variable Importance")  # plot 
   
 }
-
-
-
-
-objCorpora <- getTestTrainCorpora()
-dtm <- getTfidfDTM(corpus = objCorpora$jobOffersCorpus)
-pca <- getSignificativeTerms(dtm = dtm,variability = 0.95,sparsity = 0.97)
-
-summary(pca)
-plot(pca)
-
-sum(round(100*(pca$sdev)^2 / sum(pca$sdev^2),6))
-
-
-

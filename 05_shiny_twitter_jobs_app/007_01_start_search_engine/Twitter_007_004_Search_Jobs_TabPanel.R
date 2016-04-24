@@ -59,9 +59,9 @@ findJobsPanel <- tabPanel("Search Twitter",
                             textInput("txtSearchBox", "1. Insert search string:","")
                             ,sliderInput("n", 
                                          "2. Set number of tweets to retrieve:", 
-                                         value = 250,
+                                         value = 600,
                                          min = 1, 
-                                         max = 500)
+                                         max = 1200)
                             ,br()
                             ,strong("3. Click on the button:")
                             ,br()

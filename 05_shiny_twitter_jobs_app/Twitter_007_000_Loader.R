@@ -17,7 +17,7 @@ if(!exists("corpusPanel", mode="function"))
   source("./007_02_corpus/Twitter_0007_05_corpus_main.R")
 
 
-getRandomColors <- function (len = 1,colorMix = c(64,64,64)){
+getRandomColors <- function (len = 1,colorMix = c(255,255,255)){
   
   #debug   len=1
   #debug   colorMix  <- c(32,32,32)

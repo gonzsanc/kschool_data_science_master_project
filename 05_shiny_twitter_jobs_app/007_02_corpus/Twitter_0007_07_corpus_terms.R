@@ -34,10 +34,17 @@ drawTermFreqPlot <- function (corpus, minFreq=10){
              ,heigth=10
   )
  
-  p$params$height <- 500
-  if (nrow(tdm.matrix.termsFreq)>25){
-    p$params$height <- 500 + 20 * (nrow(tdm.matrix.termsFreq)-25)
-  }
+    p$params$height <-   25 * (nrow(tdm.matrix.termsFreq))
+
+  p$chart(margin = max(tdm.matrix.termsFreq$count)*1.4)
+  p$yAxis (axisLabel="Term Frequency in Corpus")
+  p$chart(valueFormat="#!d3.format('d')!#")
+  p$chart(showValues=T)
+  p$chart(showControls=F)
+  
+  bcol <- getRandomColors(len = nrow(tdm.matrix.termsFreq))
+  p$chart(barColor = bcol)
+  
   
   return (p)
 }
@@ -93,12 +100,11 @@ drawTermFreqPlotOld <- function (corpus, minFreq=10){
                                    for both reducing data dimensionality and organizing the data
                                    into clusters. The generated groups, namely the components, may also
                                    be considered as a topic collection that defines the composition of the corpus. 
-                                    Each of the groups PCA components is linearly independent, 
-                                  allowing redundance removal fom the data and revealing the latent corpus subjects. 
-                                    Among the major drawbacks of PCA decomposition is that
-                                    the model is not neither easy to interpret nor to transform. 
-                                    Other methods, such as LDA classification are very frequently used to extract 
-                                    topics from texts too.")
+                                   The central idea is to transform a set of data with p attributes into a new data
+                                   set with k attributes, being k<p (dimensionality reduction), while keeping most
+                                   of the data variability in the new reduced data set. It is possible then to 
+                                   examine still the new reduced model and infere the influence of the different
+                                   factors on the original data set by analyzing the reduced one.")
                                  
                                  
                                  ),
