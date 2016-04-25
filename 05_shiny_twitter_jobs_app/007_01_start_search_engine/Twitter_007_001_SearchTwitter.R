@@ -48,5 +48,19 @@ getTweetsDataFrame <- function (query,n=750,preformat=T){
   return(tweets)
 }
 
+#Uses job specific keywords to retrieve tweets. 
+#retrieve similar topics from twitter.
+getTweetsTrainingKeywords <- function (n=750,preformat=T){
+  
+  keywords <-  paste(c("job",'"job offer"','"vacant position"',"vacancy",'"vacant positions"',
+                       "hiring","full-time","part-time",'"permanent job"','"temporary job"','"temporary worker"'
+                       ,'"freelance worker"','freelancer','"season worker"',
+                       "position","vacant","apply","application","hire")
+                     ,collapse = " OR ")
+  
+  return(getTweetsDataFrame (query=keywords,n=n,preformat=T))
+  
+}
+
 
 #sampleDF <- getTweetsDataFrame("job boston")

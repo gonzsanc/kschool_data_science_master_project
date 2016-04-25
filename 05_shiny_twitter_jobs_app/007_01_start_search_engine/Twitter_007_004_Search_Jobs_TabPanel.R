@@ -63,20 +63,34 @@ findJobsPanel <- tabPanel("Search Twitter",
                                          min = 1, 
                                          max = 1200)
                             ,br()
-                            ,strong("3. Click on the button:")
-                            ,br()
-                            ,actionButton("cmdSearchTwitter","Go!")
-                            ,br()
-                            ,br()
+                            
+                            ,fluidRow(
+                              column(width=4,h5("Search!"))
+                              ,column(width=1,h5("OR.."))
+                              ,column(width=6,h5("Get Jobs!"))
+                            )
+                            ,fluidRow(
+                              column(width=4,actionButton("cmdSearchTwitter","Search!"))
+                              ,column(width=1,h5(""))
+                              ,column(width=6,actionButton("cmdSearchJobs","Get Jobs!"))
+                            )
+   
                             ,br()
                           
-                            ,strong("4. Wait up to 30 seconds...")
+                            ,strong("3. Wait up to 45 seconds...")
+                            ,br()
+                            ,br()
+                            ,strong("4. Filter jobs on 'Job Extractor Menu'")
                             
                             )
                           
-                          
                           ,mainPanel(
+                            fluidRow(
                             DT::dataTableOutput("tblTweets")
+                            ),
+                            fluidRow(
+                              DT::dataTableOutput("tblJobs")
+                            )
                             
                           )
 )

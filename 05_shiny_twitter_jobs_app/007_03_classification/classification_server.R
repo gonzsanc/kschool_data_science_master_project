@@ -106,6 +106,9 @@ getGBMPredictionSet <- function (dataSet){
 
 #Returns a table containing the messages and their classification as jobs or otherwise.
 getPrediction  <- function (sparsity=0.98,sensibility=0.5){
+  
+    sensibility <- 1-sensibility
+    
     predDataDTM <- getPredictionDataDTM  (sparsity)
     pred <- getGBMPredictionSet(predDataDTM)
     classifiedMessages <- list()

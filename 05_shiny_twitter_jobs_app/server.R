@@ -11,20 +11,62 @@ shinyServer(function(input, output) {
 #SEARCH TAB =========================================================================
     #Twitter Search results table
   
-      output$tblTweets <- DT::renderDataTable({
-        input$cmdSearchTwitter
-        if (isolate(input$txtSearchBox)!="" & isolate(input$cmdSearchTwitter)==cmdSearchTwitter_counter){
-          cmdSearchTwitter_counter <<- cmdSearchTwitter_counter + 1
-          data <- getTweetsDataFrame(isolate(input$txtSearchBox),n=isolate(input$n))
-          GenAllTMObjects (data)
-          DT::datatable(genTweetTabTable(tweets.messages.dt), 
-                        options = list(pageLength = 10), 
-                        escape = c(1,2))
-      }
-    }
-    )#End of Twitter Search results table
-
+  
+  tblTypeSearch <- function (){
+    if (input$cmdSearchTwitter==0) return (F)
+    return (T)
+  }
+  
+  
+  
+  getSearchDataTable <- function() {
+    if (isolate(input$cmdSearchTwitter==0)) return 
+    if (isolate(input$txtSearchBox)!=""){
+      data <- getTweetsDataFrame(isolate(input$txtSearchBox),n=isolate(input$n))
+      GenAllTMObjects (data)
+      return(
+        DT::datatable(genTweetTabTable(tweets.messages.dt), 
+                    options = list(pageLength = 10), 
+                    escape = c(1,2))
+      )
+        }
+  }
+  #End of Twitter Search results table
+  
+  tblTypeJobs <- function (){
+    if (input$cmdSearchJobs==0) return (F)
+    return (T)
+  }
+  
+  
+  getJobsDataTable <- function (){
+    if (input$cmdSearchJobs==0) return 
+      data <- getTweetsTrainingKeywords(n=isolate(input$n))
+      GenAllTMObjects (data)
+      return(
+        DT::datatable(genTweetTabTable(tweets.messages.dt), 
+                      options = list(pageLength = 10), 
+                      escape = c(1,2))
+      )
     
+    
+  }
+  
+  
+  
+  
+  
+  output$tblTweets <- DT::renderDataTable({
+    
+    if (tblTypeSearch()==T){
+      getSearchDataTable()
+    }else
+    if (tblTypeJobs()==T){
+      getJobsDataTable()
+    }
+    
+  })
+  
     output$Dendrogram <- #isolate({
       renderPlot({
       input$cmdSearchTwitter
