@@ -3,7 +3,7 @@
 #options(shiny.host = "0.0.0.0")
 source("007_03_classification/classification_server_external.R")
 
-shinyServer(function(input, output,session) {
+shinyServer(function(input, output) {
   
   #SERVER BODY.
   cmdSearchTwitter_counter <- 1
@@ -11,79 +11,81 @@ shinyServer(function(input, output,session) {
 #SEARCH TAB =========================================================================
     #Twitter Search results table
   
-  tblSearchCounter <- 0
-  tblJobsCounter <- 0
-  
-  tblTypeSearch <- function (){
-    
-    if (input$cmdSearchTwitter==tblSearchCounter) return (F)
-    tblSearchCounter <<- input$cmdSearchTwitter
-    return (T)
-  }
+  searchDataTableType <- reactiveValues()
+  searchDataTableType$search <- T
+  searchDataTableType$jobs <- F
   
   
+  tblTypeSearch <- reactive({
+    input$cmdSearchTwitter
+    searchDataTableType$search <- T
+    searchDataTableType$jobs <- F
+  })
   
-  getSearchDataTable <- function() {
-    query <- isolate(input$txtSearchBox)
-    #if (str_length(query) == 0) return (data.table())
-    
-    if (input$cmdSearchTwitter>0 & query!="") {
-    
-      data <- getTweetsDataFrame(isolate(input$txtSearchBox),n=isolate(input$n))
-      GenAllTMObjects (data)
-      return(
-        DT::datatable(genTweetTabTable(tweets.messages.dt), 
-                    options = list(pageLength = 10), 
-                    escape = c(1,2))
-      )
-    }else{
-      
-      return (data.table())
-    }
-    
-  }
-  #End of Twitter Search results table
-  
-  tblTypeJobs <- function (){
-    if (input$cmdSearchJobs==tblJobsCounter) return (F)
-    updateTextInput(session, "txtSearchBox","1. Insert search string:",
-                    'Refinement on Job Extractor...')
-    tblJobsCounter <<- input$cmdSearchJobs
-    return (T)
-  }
-  
-  
-  
-  
-  getJobsDataTable <- function (){
-    if (input$cmdSearchJobs>0) { 
-      
-      
-      data <- getTweetsTrainingKeywords(n=isolate(input$n))
-      GenAllTMObjects (data)
-      return(
-        DT::datatable(genTweetTabTable(tweets.messages.dt), 
-                      options = list(pageLength = 10), 
-                      escape = c(1,2))
-      )
-    }else{
-      return (data.table())
-    }
-    
-  }
-  
+  tblTypeJobs <- reactive({
+    input$cmdSearchJobs
+    searchDataTableType$search <- F
+    searchDataTableType$jobs <- T
+  })
   
   output$tblTweets <- DT::renderDataTable({
-    dt <- data.table()
-    if (tblTypeSearch()==T){
-      dt <- getSearchDataTable()
+    if (searchDataTableType$search==T){
+      
+      genOutputTblTweets <- function()
     }
-    if (tblTypeJobs()==T){
-      dt <- getJobsDataTable()
+    else
+    if (searchDataTableType$jobs==T){
+      
     }
-    return (dt)
     
   })
+  
+  genOutputTblTweets <- function(){
+        input$cmdSearchTwitter
+        if (isolate(input$txtSearchBox)!="" & isolate(input$cmdSearchTwitter)==cmdSearchTwitter_counter){
+          cmdSearchTwitter_counter <<- cmdSearchTwitter_counter + 1
+          data <- getTweetsDataFrame(isolate(input$txtSearchBox),n=isolate(input$n))
+          GenAllTMObjects (data)
+          DT::datatable(genTweetTabTable(tweets.messages.dt), 
+                        options = list(pageLength = 10), 
+                        escape = c(1,2))
+        }
+    }
+  
+
+  output$tblTweets <- DT::renderDataTable({
+    input$cmdSearchTwitter
+    if (isolate(input$txtSearchBox)!="" & isolate(input$cmdSearchTwitter)==cmdSearchTwitter_counter){
+      cmdSearchTwitter_counter <<- cmdSearchTwitter_counter + 1
+      data <- getTweetsDataFrame(isolate(input$txtSearchBox),n=isolate(input$n))
+      GenAllTMObjects (data)
+      DT::datatable(genTweetTabTable(tweets.messages.dt), 
+                    options = list(pageLength = 10), 
+                    escape = c(1,2))
+    }
+  }
+  )#End of Twitter Search results table
+  
+  
+  
+  
+  
+  
+  
+  output$tblJobs <- DT::renderDataTable({
+    input$cmdSearchJobs
+    inputN <- reactiveValues()
+    inputN <- isolate(input$n)
+     data <- getTweetsTrainingKeywords(n=)
+      GenAllTMObjects (data)
+      DT::datatable(genTweetTabTable(tweets.messages.dt), 
+                    options = list(pageLength = 10), 
+                    escape = c(1,2))
+    }
+  
+  )#End of Twitter Search results table
+  
+  
   
     output$Dendrogram <- #isolate({
       renderPlot({
